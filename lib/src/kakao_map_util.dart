@@ -30,4 +30,34 @@ class KakaoMapUtil {
     return KakaoLatLng(_locationData.latitude ?? 37.56633045338814,
         _locationData.longitude ?? 126.97703388516338);
   }
+
+  static String mapListToJson(List<Map<String, String>> mapList) {
+    String resultStr = "[";
+
+    mapList.forEach((m) {
+      resultStr += "{";
+      m.forEach((key, value) {
+        resultStr += "$key: '$value', ";
+      });
+      resultStr += "},";
+    });
+
+    return resultStr + "]";
+  }
+
+  static String listToJsString(List<String> list) {
+    String resultStr = "[";
+    list.forEach((e) {
+      resultStr += "'$e', ";
+    });
+    return resultStr + "]";
+  }
+
+  static RegExp _parseLocationRegExp = new RegExp(r'[\(\),]');
+
+  static KakaoLatLng parseKakaoLatLng(String m) {
+    final List<String> latLngStr =
+        m.replaceAll(_parseLocationRegExp, '').split(' ');
+    return KakaoLatLng(double.parse(latLngStr[0]), double.parse(latLngStr[1]));
+  }
 }

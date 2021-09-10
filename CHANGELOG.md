@@ -1,3 +1,8 @@
 ## 0.0.1
+initial package
 
-* TODO: Describe initial release.
+## 0.0.1+1
+change git branch name - main
+
+## 0.0.2
+add custom clustering, fix the map was not partially loaded.

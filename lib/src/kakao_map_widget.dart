@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:kakao_map_flutter/kakao_map_flutter.dart';
@@ -56,52 +57,60 @@ class KakaoMap extends StatelessWidget {
   final KakaoMapState _state = KakaoMapState();
 
   @override
-  Widget build(BuildContext context) => SizedBox(
-      width: width,
-      height: height,
-      child: WebView(
-        initialUrl: _getMapPage(),
-        javascriptMode: JavascriptMode.unrestricted,
-        onWebViewCreated: (WebViewController wc) {
-          _kakaoMapController = KakaoMapController(wc);
-          if (onMapCreated != null) onMapCreated!(_kakaoMapController);
-        },
-        javascriptChannels: Set.from([
-          JavascriptChannel(
-              name: 'onMapFinished',
-              onMessageReceived: (_) => _onMapLoadFinished()),
-          JavascriptChannel(
-              name: 'sendCenterPoint',
-              onMessageReceived: (m) {
-                _state.setCenter(_parseKakaoLatLng(m.message));
-              }),
-          JavascriptChannel(
-              name: 'sendLevel',
-              onMessageReceived: (m) {
-                _state.setLevel(int.parse(m.message));
-              }),
-          JavascriptChannel(
-              name: 'markerTouch',
-              onMessageReceived: (m) {
-                if (onMarkerTouched != null) {
-                  final List<String> markerInfo = m.message.split('_');
-                  onMarkerTouched!(
-                    _parseKakaoLatLng(markerInfo[0]),
-                    int.parse(markerInfo[1])
-                  );
-                }
-              }),
-        ]),
-      ));
+  Widget build(BuildContext context) {
+    return SizedBox(
+        width: width,
+        height: height,
+        child: LayoutBuilder(
+            builder: (BuildContext context, BoxConstraints constraints) =>
+                WebView(
+                  initialUrl:
+                      getMapPage(constraints.maxWidth, constraints.maxHeight),
+                  javascriptMode: JavascriptMode.unrestricted,
+                  onWebViewCreated: (WebViewController wc) {
+                    _kakaoMapController = KakaoMapController(wc);
+                    if (onMapCreated != null)
+                      onMapCreated!(_kakaoMapController);
+                  },
+                  javascriptChannels: Set.from([
+                    JavascriptChannel(
+                        name: 'onMapFinished',
+                        onMessageReceived: (_) => _onMapLoadFinished()),
+                    JavascriptChannel(
+                        name: 'sendCenterPoint',
+                        onMessageReceived: (m) {
+                          _state.setCenter(
+                              KakaoMapUtil.parseKakaoLatLng(m.message));
+                        }),
+                    JavascriptChannel(
+                        name: 'sendLevel',
+                        onMessageReceived: (m) {
+                          _state.setLevel(int.parse(m.message));
+                        }),
+                    JavascriptChannel(
+                        name: 'markerTouch',
+                        onMessageReceived: (m) {
+                          if (onMarkerTouched != null) {
+                            final List<String> markerInfo =
+                                m.message.split('_');
+                            onMarkerTouched!(
+                                KakaoMapUtil.parseKakaoLatLng(markerInfo[0]),
+                                int.parse(markerInfo[1]));
+                          }
+                        }),
+                  ]),
+                )));
+  }
 
-  String _getMapPage() {
-    final String html = '''
+  String getMapPage(double width, double height) {
+    print("[map size] $width, $height");
+    return Uri.dataFromString('''
 <html>
   <head>
     <meta name='viewport' content='width=device-width, initial-scale=1.0, user-scalable=yes'/>
   </head>
   <body style="margin:0; padding:0;">
-    <div id='kakao_map_container' style="width:100%; height:100%;" />
+    <div id='kakao_map_container' style="width:100%; height:100%; ${Platform.isIOS ? 'min-width:${width}px; min-height:${height}px;' : ""}" />
 	<script type="text/javascript" src='https://dapi.kakao.com/v2/maps/sdk.js?autoload=false&appkey=$kakaoApiKey${clustererServiceEnable ? '&libraries=clusterer' : ''}'></script>
 	<script type="text/javascript">
 		const container = document.querySelector('#kakao_map_container');
@@ -121,11 +130,7 @@ class KakaoMap extends StatelessWidget {
     });
 	</script>
 </body>
-</html>
-    ''';
-
-    return Uri.dataFromString(html,
-            mimeType: 'text/html', encoding: Encoding.getByName('utf-8'))
+</html>''', mimeType: 'text/html', encoding: Encoding.getByName('utf-8'))
         .toString();
   }
 
@@ -133,18 +138,13 @@ class KakaoMap extends StatelessWidget {
     if (autoLocationEnable) _kakaoMapController.setNowLocation();
     if (onMapLoaded != null) onMapLoaded!();
   }
-
-  KakaoLatLng _parseKakaoLatLng(String m) {
-    final List<String> latLngStr =
-        m.replaceAll(new RegExp(r'[\(\),]'), '').split(' ');
-    return KakaoLatLng(double.parse(latLngStr[0]), double.parse(latLngStr[1]));
-  }
 }
 
 class KakaoMapController {
   final WebViewController _controller;
   final KakaoMapState _state = KakaoMapState();
   bool _isUsingBounds = false;
+  bool _isUsingClustering = false;
   int _customOverlayCount = 0;
   int _markerCount = 0;
 
@@ -289,19 +289,31 @@ class KakaoMapController {
 
   // marker clusterer using added markers
   // make sure enable clustererServiceEnable option.
-  startClustering({bool avgCenter = true, int minLevel = 10}) {
+  startClustering(
+      {bool avgCenter = true,
+      int minLevel = 10,
+      List<int>? calculator,
+      List<String>? texts,
+      List<Map<String, String>>? styles}) {
     final String script = '''const clusterer = new kakao.maps.MarkerClusterer({
   map: map,
   averageCenter: $avgCenter,
-  minLevel: $minLevel
+  minLevel: $minLevel,
+  calculator: ${calculator ?? ""},
+  texts: ${texts != null ? KakaoMapUtil.listToJsString(texts) : ""},
+  styles: ${styles != null ? KakaoMapUtil.mapListToJson(styles) : ""}
 });
-clusterer.addMarkers(markers);''';
+${_markerCount != 0 ? 'clusterer.addMarkers(markers);' : ''}''';
     _runScript(script);
+    _isUsingClustering = true;
   }
 
   // marker clusterer update
   updateClustering() {
+    if (!_isUsingClustering) return; // todo : exception processing
     final String script = 'clusterer.addMarkers(markers);';
     _runScript(script);
   }
+
+  bool nowClusteringEnabled() => _isUsingClustering;
 }
