@@ -108,28 +108,28 @@ class KakaoMap extends StatelessWidget {
 <html>
   <head>
     <meta name='viewport' content='width=device-width, initial-scale=1.0, user-scalable=yes'/>
+    <script type="text/javascript" src='https://dapi.kakao.com/v2/maps/sdk.js?autoload=false&appkey=$kakaoApiKey${clustererServiceEnable ? '&libraries=clusterer' : ''}'></script>
   </head>
   <body style="margin:0; padding:0;">
-    <div id='kakao_map_container' style="width:100%; height:100%; ${Platform.isIOS ? 'min-width:${width}px; min-height:${height}px;' : ""}" />
-	<script type="text/javascript" src='https://dapi.kakao.com/v2/maps/sdk.js?autoload=false&appkey=$kakaoApiKey${clustererServiceEnable ? '&libraries=clusterer' : ''}'></script>
-	<script type="text/javascript">
-		const container = document.querySelector('#kakao_map_container');
-		let map;
-		let bounds;
-		const customOverlays = [];
-		const markers = [];
-		
-		kakao.maps.load(function() {
-		  const options = {
-        center: new kakao.maps.LatLng(${initLocation.latitude}, ${initLocation.longitude}),
-        level: $level
-      };
-		  map = new kakao.maps.Map(container, options);
-      onMapFinished.postMessage("");
-      bounds = new kakao.maps.LatLngBounds();
-    });
-	</script>
-</body>
+    <div id='kakao_map_container' style="width:100%; height:100%; min-width:${width}px; min-height:${height}px;" />
+    <script type="text/javascript">
+      const container = document.querySelector('#kakao_map_container');
+      let map;
+      let bounds;
+      const customOverlays = [];
+      const markers = [];
+      
+      kakao.maps.load(function() {
+        const options = {
+          center: new kakao.maps.LatLng(${initLocation.latitude}, ${initLocation.longitude}),
+          level: $level
+        };
+        map = new kakao.maps.Map(container, options);
+        onMapFinished.postMessage("");
+        bounds = new kakao.maps.LatLngBounds();
+      });
+    </script>
+  </body>
 </html>''', mimeType: 'text/html', encoding: Encoding.getByName('utf-8'))
         .toString();
   }
