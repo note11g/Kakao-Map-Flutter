@@ -27,6 +27,8 @@ class KakaoMap extends StatelessWidget {
   // default is false
   final bool clustererServiceEnable;
 
+  final bool geocodingServiceEnable;
+
   // kakao dev javascript key
   final String kakaoApiKey;
 
@@ -49,7 +51,8 @@ class KakaoMap extends StatelessWidget {
       this.clustererServiceEnable = false,
       this.onMapCreated,
       this.onMapLoaded,
-      this.onMarkerTouched});
+      this.onMarkerTouched,
+      this.geocodingServiceEnable = false});
 
   // map controller
   late final KakaoMapController _kakaoMapController;
@@ -299,9 +302,9 @@ class KakaoMapController {
   map: map,
   averageCenter: $avgCenter,
   minLevel: $minLevel,
-  calculator: ${calculator ?? ""},
-  texts: ${texts != null ? KakaoMapUtil.listToJsString(texts) : ""},
-  styles: ${styles != null ? KakaoMapUtil.mapListToJson(styles) : ""}
+  ${calculator != null ? "calculator: $calculator," : ""}
+  ${texts != null ? "texts: ${KakaoMapUtil.listToJsString(texts)}," : ""}
+  ${styles != null ? "styles: ${KakaoMapUtil.mapListToJson(styles)}" : ""}
 });
 ${_markerCount != 0 ? 'clusterer.addMarkers(markers);' : ''}''';
     _runScript(script);
