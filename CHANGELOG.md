@@ -9,3 +9,6 @@ add custom clustering, fix the map was not partially loaded.
 
 ## 0.0.2+1
 fix android platform view over sizing issue
+
+## 0.0.3
+fix default clustering service error
