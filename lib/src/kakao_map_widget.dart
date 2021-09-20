@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:kakao_map_flutter/kakao_map_flutter.dart';
@@ -18,10 +17,6 @@ class KakaoMap extends StatelessWidget {
   // zoom level
   // default is 3
   final int level;
-
-  // auto location using gps
-  // default is false
-  final bool autoLocationEnable;
 
   // markers clusterer service
   // default is false
@@ -47,7 +42,6 @@ class KakaoMap extends StatelessWidget {
       required this.initLocation,
       this.level = 3,
       required this.kakaoApiKey,
-      this.autoLocationEnable = false,
       this.clustererServiceEnable = false,
       this.onMapCreated,
       this.onMapLoaded,
@@ -74,6 +68,7 @@ class KakaoMap extends StatelessWidget {
                     _kakaoMapController = KakaoMapController(wc);
                     if (onMapCreated != null)
                       onMapCreated!(_kakaoMapController);
+                    print("[kakaoMap] onMapCreated!");
                   },
                   javascriptChannels: Set.from([
                     JavascriptChannel(
@@ -106,14 +101,13 @@ class KakaoMap extends StatelessWidget {
   }
 
   String getMapPage(double width, double height) {
-    print("[map size] $width, $height");
     return Uri.dataFromString('''
 <html>
   <head>
     <meta name='viewport' content='width=device-width, initial-scale=1.0, user-scalable=yes'/>
-    <script type="text/javascript" src='https://dapi.kakao.com/v2/maps/sdk.js?autoload=false&appkey=$kakaoApiKey${clustererServiceEnable ? '&libraries=clusterer' : ''}'></script>
   </head>
   <body style="margin:0; padding:0;">
+    <script type="text/javascript" src='https://dapi.kakao.com/v2/maps/sdk.js?autoload=false&appkey=$kakaoApiKey${clustererServiceEnable ? '&libraries=clusterer' : ''}'></script>
     <div id='kakao_map_container' style="width:100%; height:100%; min-width:${width}px; min-height:${height}px;" />
     <script type="text/javascript">
       const container = document.querySelector('#kakao_map_container');
@@ -138,8 +132,8 @@ class KakaoMap extends StatelessWidget {
   }
 
   _onMapLoadFinished() {
-    if (autoLocationEnable) _kakaoMapController.setNowLocation();
     if (onMapLoaded != null) onMapLoaded!();
+    print('[kakaoMap] Loading Finished!');
   }
 }
 
@@ -153,24 +147,25 @@ class KakaoMapController {
 
   KakaoMapController(this._controller);
 
-  _runScript(String script) => _controller.evaluateJavascript(script);
+  Future _runScript(String script) async =>
+      await _controller.evaluateJavascript(script);
 
   // reload map
-  reload() => _controller.reload();
+  Future reload() async => await _controller.reload();
 
   // set now location using gps
   // return now location
   Future<KakaoLatLng?> setNowLocation() async {
     final KakaoLatLng? location = await KakaoMapUtil.determinePosition();
-    if (location != null) setCenter(location);
+    if (location != null) await setCenter(location);
     return location;
   }
 
   // set center point
-  setCenter(KakaoLatLng location) {
+  Future setCenter(KakaoLatLng location) async {
     final String script =
         '''(()=>{ const location = new kakao.maps.LatLng(${location.latitude}, ${location.longitude}); map.setCenter(location); })()''';
-    _runScript(script);
+    await _runScript(script);
   }
 
   // return now center point
@@ -185,9 +180,9 @@ class KakaoMapController {
   }
 
   // set zoom level
-  setLevel(int level) {
+  Future setLevel(int level) async {
     final String script = '(()=>map.setLevel($level))()';
-    _runScript(script);
+    await _runScript(script);
   }
 
   // return now zoom level

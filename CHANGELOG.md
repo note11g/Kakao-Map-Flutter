@@ -12,3 +12,6 @@ fix android platform view over sizing issue
 
 ## 0.0.3
 fix default clustering service error
+
+## 0.0.4
+fix onLoaded function not executed error

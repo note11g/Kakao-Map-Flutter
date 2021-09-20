@@ -20,10 +20,17 @@ class MyApp extends StatelessWidget {
               child: KakaoMap(
             initLocation: KakaoLatLng(33.450701, 126.570667),
             kakaoApiKey: "kakao javascript api key here",
-            autoLocationEnable: true,
             clustererServiceEnable: true,
             onMapCreated: (controller) {
               _mapController = controller;
+            },
+            onMapLoaded: () {
+              Get.rawSnackbar(
+                  message: "맵 로드 완료",
+                  margin: const EdgeInsets.all(8),
+                  borderRadius: 12.0,
+                  snackPosition: SnackPosition.TOP);
+              _mapController.setNowLocation();
             },
             onMarkerTouched: (markerLocation, markerIndex) {
               Get.rawSnackbar(

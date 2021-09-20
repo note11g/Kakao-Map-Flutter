@@ -1,6 +1,6 @@
 name: kakao_map_flutter
 description: kakao map flutter plugin using webview_flutter
-version: 0.0.3
+version: 0.0.4
 homepage: https://github.com/note11g/Kakao-Map-Flutter
 
 environment:
