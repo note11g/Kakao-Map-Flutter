@@ -19,7 +19,7 @@ class MyApp extends StatelessWidget {
           Expanded(
               child: KakaoMap(
             initLocation: KakaoLatLng(33.450701, 126.570667),
-            kakaoApiKey: "kakao javascript api key here",
+            kakaoApiKey: "카카오 SDK 자바스크립트 키를 여기에 넣어주세요",
             clustererServiceEnable: true,
             onMapCreated: (controller) {
               _mapController = controller;

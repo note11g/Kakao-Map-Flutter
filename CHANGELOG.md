@@ -15,3 +15,6 @@ fix default clustering service error
 
 ## 0.0.4
 fix onLoaded function not executed error
+
+## 0.0.5
+update webview plugin and android 12 support
